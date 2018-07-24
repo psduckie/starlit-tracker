@@ -42,6 +42,13 @@ function parseSignups(value, index, array) {
 		output += `${value.player} signed up as ${value.chara} (Team ${value.team})\n`;		
 	}
 }
+function parseSignupsDM(value, index, array) {
+	if(output.length > 1500) {
+		disc.author.send(output);
+		output = "";
+	}
+	output += `ID: ${value.id}, Player: ${value.player}, Character: ${value.chara}, Team: ${value.team}\n`;
+}
 
 // Connect to the Google-Cloud-based SaaS chat server I provisioned for this
 client.login(config.token);
@@ -50,14 +57,15 @@ client.login(config.token);
 client.on("message", message => {
 	if(message.content === `${config.prefix}test`) { // Test message
 		console.log(message.author);
-		dbConnection.query(`INSERT INTO test(test) VALUES('${message.author.username}');`);
-		message.channel.send(`Test received, ${message.author.username}.`);
+//		dbConnection.query(`INSERT INTO test(test) VALUES('${message.author.username}');`);
+		message.reply(`test received.`);
 	}
 	if(message.content.startsWith(`${config.prefix}signup `)) { // Insert into database
 		var param = message.content.slice(8);
 		console.log(param);
 		dbConnection.query(`INSERT INTO signups(player, chara) VALUES('${message.author.username}', '${param}');`);
-		message.channel.send(`Signup received, ${message.author.username}.`);
+		message.member.addRole(message.guild.roles.find("name", "Storyline Players")); // Mark the user as having inserted a record into the database
+		message.reply(`signup received.`);
 	}
 	if(message.content === `${config.prefix}signuplist`) { // Read from database
 		dbConnection.query("SELECT player, chara, team FROM signups;", function(err, result, fields) {
@@ -68,5 +76,21 @@ client.on("message", message => {
 			result.forEach(parseSignups);
 			message.channel.send(output);
 		});
+	}
+	if(message.content === `${config.prefix}signuplist dm`) { // Table dump from database	
+		if(message.member.roles.exists("name", "Storyline DM")) { // Authenticate user; if it succeeds, dump the table into a private message
+			console.log("If statement hit");
+			dbConnection.query("SELECT * FROM signups;", function(err, result, fields) {
+				output = "";
+				disc = message;
+				result.forEach(parseSignupsDM);
+				message.author.send(output);
+			});
+			message.reply("signup list sent.");
+		}
+		else // Authentication failed; print access denied message
+		{
+			message.reply("access denied.");
+		}
 	}
 });
