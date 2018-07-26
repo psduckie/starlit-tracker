@@ -4,6 +4,8 @@ const config = require("./config.json");
 // Define variables
 var output = "";
 var disc;
+const filled = "█";
+const empty = "░";
 
 // Create the chatbot interface
 const Discord = require("discord.js");
@@ -49,6 +51,39 @@ function parseSignupsDM(value, index, array) {
 	}
 	output += `ID: ${value.id}, Player: ${value.player}, Character: ${value.chara}, Team: ${value.team}\n`;
 }
+function track(value, index, array) {
+	console.log(value.enabled);
+	if(output.length > 1500) {
+		disc.author.send(output);
+		output = "";
+	}
+	if(value.enabled === 0) {
+		output += `??? :triangular_flag_on_post:\n`;
+	}
+	else {
+		let numChars = (value.progress / value.maxProgress * 100) % 10;
+		output += `${value.description} `;
+		for(let i = 0; i < numChars; i++) {
+			output += filled;
+		}
+		for(let i = numChars; i < 10; i++) {
+			output += empty;
+		}
+		if(value.progress < value.maxProgress) {
+			output += ":triangular_flag_on_post:\n";
+		}
+		else {
+			output += ":white_check_mark:\n";
+		}
+	}
+}
+function trackDM(value, index, array) {
+	if(output.length > 1500) {
+		disc.author.send(output);
+		output = "";
+	}
+	output += `ID: ${value.id}, Description: ${value.description}, Progress: ${value.progress}, Max Progress: ${value.maxProgress}, Enabled: ${value.enabled}\n`;
+}
 
 // Connect to the Google-Cloud-based SaaS chat server I provisioned for this
 client.login(config.token);
@@ -93,4 +128,47 @@ client.on("message", message => {
 			message.reply("access denied.");
 		}
 	}
+	if(message.content === `${config.prefix}track`) {
+		dbConnection.query("SELECT description, progress, maxProgress, enabled FROM tracker;", function(err, result, fields) {
+			if(err) {throw err;}
+			output = "**The Rescue of E'chok**\n";
+			disc = message;
+			result.forEach(track);
+			message.channel.send(output);
+		});
+	}
+	if(message.content === `${config.prefix}track dm`) {
+		if(message.member.roles.exists("name", "Storyline DM")) {
+			dbConnection.query("SELECT * FROM tracker;", function(err, result, fields) {
+				output = "";
+				disc = message;
+				result.forEach(trackDM);
+				message.author.send(output);
+			});
+			message.reply("tracker list sent.");
+		}
+		else // Authentication failed; print access denied message
+		{
+			message.reply("access denied.");
+		}
+	}
+	if(message.content.startsWith(`${config.prefix}progress `)) { 
+		if(message.member.roles.exists("name", "Storyline DM")) {
+			var param = message.content.slice(10);
+			var progress;
+			console.log(param);
+			dbConnection.query(`SELECT progress FROM tracker WHERE id = ${param};`, function(err, result, fields) {
+				result.forEach(function(value, index, array) {
+					progress = value.progress + 1;
+				});
+			});
+			dbConnection.query(`UPDATE tracker SET progress = ${progress} WHERE id = ${param};`);
+			message.reply(`update received.`);
+		}
+		else // Authentication failed; print access denied message
+		{
+			message.reply("access denied.");
+		}
+	}
+
 });
