@@ -52,7 +52,7 @@ function parseSignupsDM(value, index, array) {
 	output += `ID: ${value.id}, Player: ${value.player}, Character: ${value.chara}, Team: ${value.team}\n`;
 }
 function track(value, index, array) {
-	console.log(value.enabled);
+	console.log(value);
 	if(output.length > 1500) {
 		disc.author.send(output);
 		output = "";
@@ -61,19 +61,22 @@ function track(value, index, array) {
 		output += `??? :triangular_flag_on_post:\n`;
 	}
 	else {
-		let numChars = (value.progress / value.maxProgress * 100) % 10;
+		let numChars = Math.round(((value.progress / value.maxProgress) * 100) / 10);
+		console.log(`NumChars: ${numChars}`);
 		output += `${value.description} `;
 		for(let i = 0; i < numChars; i++) {
 			output += filled;
+			console.log(`${i}: Filled`);
 		}
 		for(let i = numChars; i < 10; i++) {
 			output += empty;
+			console.log(`${i}: Empty`);
 		}
 		if(value.progress < value.maxProgress) {
-			output += ":triangular_flag_on_post:\n";
+			output += " :triangular_flag_on_post:\n";
 		}
 		else {
-			output += ":white_check_mark:\n";
+			output += " :white_check_mark:\n";
 		}
 	}
 }
@@ -156,13 +159,15 @@ client.on("message", message => {
 		if(message.member.roles.exists("name", "Storyline DM")) {
 			var param = message.content.slice(10);
 			var progress;
-			console.log(param);
+			console.log(`Param: ${param}`);
 			dbConnection.query(`SELECT progress FROM tracker WHERE id = ${param};`, function(err, result, fields) {
 				result.forEach(function(value, index, array) {
-					progress = value.progress + 1;
+					this.progress = value.progress + 1;
+					console.log(`Value.progress: ${value.progress}`);
+					console.log(`Progress (in query): ${this.progress}`);
+					dbConnection.query(`UPDATE tracker SET progress = ${this.progress} WHERE id = ${param};`);
 				});
 			});
-			dbConnection.query(`UPDATE tracker SET progress = ${progress} WHERE id = ${param};`);
 			message.reply(`update received.`);
 		}
 		else // Authentication failed; print access denied message
@@ -170,5 +175,14 @@ client.on("message", message => {
 			message.reply("access denied.");
 		}
 	}
-
+	if(message.content.startsWith(`${config.prefix}enable `)) {
+		if(message.member.roles.exists("name", "Storyline DM")) {
+			var param = message.content.slice(8);
+			dbConnection.query(`UPDATE tracker SET enabled = 1 WHERE id = ${param};`);
+			message.reply(`update received.`);
+		}
+		else {
+			message.reply("access denied.");
+		}
+	}
 });
