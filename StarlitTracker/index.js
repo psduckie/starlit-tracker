@@ -14,10 +14,10 @@ const client = new Discord.Client();
 // Create the database interface
 const MySQL = require("mysql");
 const dbConnection = MySQL.createConnection({
-	host: "localhost",
-	user: "tracker",
-	password: "wotdm",
-	database: "starlit_tracker"
+	host: config.host,
+	user: config.user,
+	password: config.password,
+	database: config.database
 });
 
 // Log a ready message when ready
@@ -100,6 +100,7 @@ client.on("message", message => {
 	}
 	if(message.content.startsWith(`${config.prefix}signup `)) { // Insert into database
 		var param = message.content.slice(8);
+		param = param.replace(/'/g, "''");
 		console.log(param);
 		dbConnection.query(`INSERT INTO signups(player, chara) VALUES('${message.author.username}', '${param}');`);
 		message.member.addRole(message.guild.roles.find("name", "Storyline Players")); // Mark the user as having inserted a record into the database

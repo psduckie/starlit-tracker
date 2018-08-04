@@ -1,4 +1,9 @@
 {
 	"prefix": "^",
-	"token": "NDcwMjkwMzUzOTQxOTA1NDA5.DjUIcw.zvX5rBAlPQQGUbKuiT9pm9m3IB0"
+	"token": "NDcwMjkwMzUzOTQxOTA1NDA5.DjUIcw.zvX5rBAlPQQGUbKuiT9pm9m3IB0",
+	"host": "localhost",
+	"user": "tracker",
+	"password": "wotdm",
+	"database": "starlit_tracker"
+
 }
