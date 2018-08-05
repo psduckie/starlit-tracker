@@ -4,6 +4,6 @@
 	"host": "localhost",
 	"user": "tracker",
 	"password": "wotdm",
-	"database": "starlit_tracker"
-
+	"database": "starlit_tracker",
+	"title": "To Save a Stray"
 }

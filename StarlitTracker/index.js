@@ -1,5 +1,7 @@
-// Include config file
+// Includes
 const config = require("./config.json");
+const Discord = require("discord.js");
+const initiative = require("./initiative.js");
 
 // Define variables
 var output = "";
@@ -8,7 +10,6 @@ const filled = "█";
 const empty = "░";
 
 // Create the chatbot interface
-const Discord = require("discord.js");
 const client = new Discord.Client();
 
 // Create the database interface
@@ -135,7 +136,7 @@ client.on("message", message => {
 	if(message.content === `${config.prefix}track`) {
 		dbConnection.query("SELECT description, progress, maxProgress, enabled FROM tracker;", function(err, result, fields) {
 			if(err) {throw err;}
-			output = "**The Rescue of E'chok**\n";
+			output = `**${config.title}**\n`;
 			disc = message;
 			result.forEach(track);
 			message.channel.send(output);
