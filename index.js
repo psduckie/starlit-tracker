@@ -87,13 +87,28 @@ function trackDM(value, index, array) {
 	}
 	output += `ID: ${value.id}, Description: ${value.description}, Progress: ${value.progress}, Max Progress: ${value.maxProgress}, Enabled: ${value.enabled}\n`;
 }
-function parseHealth(message) {
-//	var healthArray = [];
-//	console.log(healthArray);
-//	healthArray.forEach(function(value, index, array) {
-//		console.log(healthArray.value);
-//		healthString += `${value}/n`;
-//	})
+function parseHealth(value, index, array) {
+    var healthEntry = "`";
+    healthEntry += value.charAbbrev.toUpperCase();
+    for (var i = healthEntry.length; i <= 5; i++) {
+        healthEntry += " ";
+    }
+    if (value.health <= 0) {
+        healthEntry += " DOWN  `";
+    } else {
+        healthEntry += " HEALTH`";
+        for (let i = 1; i <= value.health; i++) {
+            healthEntry += ` :${value.healthIcon.toLowerCase()}:`;
+        }
+    }
+    healthString += (healthEntry + "\n");
+}
+function parseHealthDM(value, index, array) {
+    if (output.length > 1500) {
+        disc.author.send(output);
+        output = "";
+    }
+    output += `ID: ${value.id}, Char Name: ${value.charName}, Char Abbrev: ${value.charAbbrev.toUpperCase()}, Health: ${value.health}, Health Icon: ${value.healthIcon.toLowerCase()}\n`;
 }
 
 // Write to database
@@ -196,22 +211,26 @@ client.on("message", message => {
 		}
 	}
 	if(message.content === `${config.prefix}health`) {
-        dbConnection.query("SELECT char_abbrev, health, health_icon FROM health;", function (err, result, fields) {
+        dbConnection.query("SELECT charAbbrev, health, healthIcon FROM health;", function (err, result, fields) {
             healthString = "";
-            result.forEach(function (value, index, array) {
-                var healthEntry = "`";
-                healthEntry += value.char_abbrev.toUpperCase();
-                for (var i = healthEntry.length; i <= 5; i++) {
-                    healthEntry += " ";
-                }
-                healthEntry += " HEALTH`";
-                for (let i = 1; i <= value.health; i++) {
-                    healthEntry += ` :${value.health_icon}:`;
-                }
-                healthString += (healthEntry + "\n");
-            });
+            result.forEach(parseHealth);
             console.log(healthString);
             message.channel.send(healthString);
         });
-	}
+    }
+    if (message.content === `${config.prefix}health dm`) {
+        if (message.member.roles.exists("name", "Storyline DM")) {
+            dbConnection.query("SELECT * FROM health;", function (err, result, fields) {
+                output = "";
+                disc = message;
+                result.forEach(parseHealthDM);
+                message.author.send(output);
+            });
+            message.reply("tracker list sent.");
+        }
+        else // Authentication failed; print access denied message
+        {
+            message.reply("access denied.");
+        }
+    }
 });
