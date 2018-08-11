@@ -87,6 +87,33 @@ function trackDM(value, index, array) {
 	}
 	output += `ID: ${value.id}, Description: ${value.description}, Progress: ${value.progress}, Max Progress: ${value.maxProgress}, Enabled: ${value.enabled}\n`;
 }
+function parseHealth(message) {
+	var healthArray = [];
+	var healthString = "";
+	dbConnection.query("SELECT char_abbrev, health, health_icon FROM health;", function(err, result, fields) {
+		result.forEach(function(value, index, array) {
+			var healthEntry = "`" + value.char_abbrev.toUpperCase() + " HEALTH`";
+			for(let i = 1; i <= value.health; i++) {
+				healthEntry += ` :${value.health_icon}:`;
+			}
+			console.log(healthEntry);
+			healthString.concat(healthEntry + "\n");
+		});
+	});
+//	console.log(healthArray);
+//	healthArray.forEach(function(value, index, array) {
+//		console.log(healthArray.value);
+//		healthString += `${value}/n`;
+//	})
+	console.log(healthString);
+	message.channel.send(healthString);
+}
+
+// Write to database
+function updateProgress(value, index, array) {
+	this.progress = value.progress + 1;
+	dbConnection.query(`UPDATE tracker SET progress = ${this.progress} WHERE id = ${param};`);
+}
 
 // Connect to the Google-Cloud-based SaaS chat server I provisioned for this
 client.login(config.token);
@@ -162,12 +189,7 @@ client.on("message", message => {
 			var progress;
 			console.log(`Param: ${param}`);
 			dbConnection.query(`SELECT progress FROM tracker WHERE id = ${param};`, function(err, result, fields) {
-				result.forEach(function(value, index, array) {
-					this.progress = value.progress + 1;
-					console.log(`Value.progress: ${value.progress}`);
-					console.log(`Progress (in query): ${this.progress}`);
-					dbConnection.query(`UPDATE tracker SET progress = ${this.progress} WHERE id = ${param};`);
-				});
+				result.forEach(updateProgress);
 			});
 			message.reply(`update received.`);
 		}
@@ -185,5 +207,8 @@ client.on("message", message => {
 		else {
 			message.reply("access denied.");
 		}
+	}
+	if(message.content === `${config.prefix}health`) {
+		parseHealth(message);
 	}
 });
