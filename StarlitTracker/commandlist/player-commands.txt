@@ -1,3 +1,0 @@
-> `^signup <character name>`: Adds a character named `<character name>` to the signup list.
-> `^signuplist`: Shows the signup list.
-> `^track`: Shows current progress.
