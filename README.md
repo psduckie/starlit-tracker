@@ -1,16 +1,2 @@
-
-
 # StarlitTracker
-
-
-
-## Usage
-
-
-
-## Developing
-
-
-
-### Tools
-
+A Discord bot for tracking RP events for the Starlight Clan.
