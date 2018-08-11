@@ -88,25 +88,12 @@ function trackDM(value, index, array) {
 	output += `ID: ${value.id}, Description: ${value.description}, Progress: ${value.progress}, Max Progress: ${value.maxProgress}, Enabled: ${value.enabled}\n`;
 }
 function parseHealth(message) {
-	var healthArray = [];
-	var healthString = "";
-	dbConnection.query("SELECT char_abbrev, health, health_icon FROM health;", function(err, result, fields) {
-		result.forEach(function(value, index, array) {
-			var healthEntry = "`" + value.char_abbrev.toUpperCase() + " HEALTH`";
-			for(let i = 1; i <= value.health; i++) {
-				healthEntry += ` :${value.health_icon}:`;
-			}
-			console.log(healthEntry);
-			healthString.concat(healthEntry + "\n");
-		});
-	});
+//	var healthArray = [];
 //	console.log(healthArray);
 //	healthArray.forEach(function(value, index, array) {
 //		console.log(healthArray.value);
 //		healthString += `${value}/n`;
 //	})
-	console.log(healthString);
-	message.channel.send(healthString);
 }
 
 // Write to database
@@ -209,6 +196,22 @@ client.on("message", message => {
 		}
 	}
 	if(message.content === `${config.prefix}health`) {
-		parseHealth(message);
+        dbConnection.query("SELECT char_abbrev, health, health_icon FROM health;", function (err, result, fields) {
+            healthString = "";
+            result.forEach(function (value, index, array) {
+                var healthEntry = "`";
+                healthEntry += value.char_abbrev.toUpperCase();
+                for (var i = healthEntry.length; i <= 5; i++) {
+                    healthEntry += " ";
+                }
+                healthEntry += " HEALTH`";
+                for (let i = 1; i <= value.health; i++) {
+                    healthEntry += ` :${value.health_icon}:`;
+                }
+                healthString += (healthEntry + "\n");
+            });
+            console.log(healthString);
+            message.channel.send(healthString);
+        });
 	}
 });
