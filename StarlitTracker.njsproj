@@ -28,6 +28,7 @@
     <DebugSymbols>true</DebugSymbols>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include=".gitattributes" />
     <Content Include="config.json" />
     <Content Include="package-lock.json" />
     <Content Include="package.json" />
