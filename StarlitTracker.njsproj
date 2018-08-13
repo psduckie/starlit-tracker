@@ -29,6 +29,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Content Include=".gitattributes" />
+    <Content Include=".gitignore" />
     <Content Include="config.json" />
     <Content Include="package-lock.json" />
     <Content Include="package.json" />
