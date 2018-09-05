@@ -94,7 +94,12 @@ function parseHealth(value, index, array) {
         healthEntry += " ";
     }
     if (value.health <= 0) {
-        healthEntry += " DOWN  `";
+        if (value.killable <= 0) {
+            healthEntry += "   DOWN`";
+        }
+        else {
+            healthEntry += "   DEAD`";
+        }
     } else {
         healthEntry += " HEALTH`";
         for (let i = 1; i <= value.health; i++) {
@@ -211,11 +216,16 @@ client.on("message", message => {
 		}
 	}
 	if(message.content === `${config.prefix}health`) {
-        dbConnection.query("SELECT charAbbrev, health, healthIcon FROM health;", function (err, result, fields) {
+        dbConnection.query("SELECT charAbbrev, health, healthIcon, killable FROM health;", function (err, result, fields) {
             healthString = "";
             result.forEach(parseHealth);
             console.log(healthString);
-            message.channel.send(healthString);
+            if (healthString != "") {
+                message.channel.send(healthString);
+            }
+            else {
+                message.reply("I can't show the health records because there are no health records to show.");
+            }
         });
     }
     if (message.content === `${config.prefix}health dm`) {
@@ -224,9 +234,14 @@ client.on("message", message => {
                 output = "";
                 disc = message;
                 result.forEach(parseHealthDM);
-                message.author.send(output);
+                if (output != "") {
+                    message.author.send(output);
+                    message.reply("health list sent.");
+                }
+                else {
+                    message.reply("I can't show the health records because there are no health records to show.");
+                }
             });
-            message.reply("tracker list sent.");
         }
         else // Authentication failed; print access denied message
         {
