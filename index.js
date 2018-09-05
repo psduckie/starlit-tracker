@@ -87,6 +87,40 @@ function trackDM(value, index, array) {
 	}
 	output += `ID: ${value.id}, Description: ${value.description}, Progress: ${value.progress}, Max Progress: ${value.maxProgress}, Enabled: ${value.enabled}\n`;
 }
+function parseHealth(value, index, array) {
+    var healthEntry = "`";
+    healthEntry += value.charAbbrev.toUpperCase();
+    for (var i = healthEntry.length; i <= 5; i++) {
+        healthEntry += " ";
+    }
+    if (value.health <= 0) {
+        if (value.killable <= 0) {
+            healthEntry += "   DOWN`";
+        }
+        else {
+            healthEntry += "   DEAD`";
+        }
+    } else {
+        healthEntry += " HEALTH`";
+        for (let i = 1; i <= value.health; i++) {
+            healthEntry += ` :${value.healthIcon.toLowerCase()}:`;
+        }
+    }
+    healthString += (healthEntry + "\n");
+}
+function parseHealthDM(value, index, array) {
+    if (output.length > 1500) {
+        disc.author.send(output);
+        output = "";
+    }
+    output += `ID: ${value.id}, Char Name: ${value.charName}, Char Abbrev: ${value.charAbbrev.toUpperCase()}, Health: ${value.health}, Health Icon: ${value.healthIcon.toLowerCase()}\n`;
+}
+
+// Write to database
+function updateProgress(value, index, array) {
+	this.progress = value.progress + 1;
+	dbConnection.query(`UPDATE tracker SET progress = ${this.progress} WHERE id = ${param};`);
+}
 
 // Connect to the Google-Cloud-based SaaS chat server I provisioned for this
 client.login(config.token);
@@ -162,12 +196,7 @@ client.on("message", message => {
 			var progress;
 			console.log(`Param: ${param}`);
 			dbConnection.query(`SELECT progress FROM tracker WHERE id = ${param};`, function(err, result, fields) {
-				result.forEach(function(value, index, array) {
-					this.progress = value.progress + 1;
-					console.log(`Value.progress: ${value.progress}`);
-					console.log(`Progress (in query): ${this.progress}`);
-					dbConnection.query(`UPDATE tracker SET progress = ${this.progress} WHERE id = ${param};`);
-				});
+				result.forEach(updateProgress);
 			});
 			message.reply(`update received.`);
 		}
@@ -186,4 +215,37 @@ client.on("message", message => {
 			message.reply("access denied.");
 		}
 	}
+	if(message.content === `${config.prefix}health`) {
+        dbConnection.query("SELECT charAbbrev, health, healthIcon, killable FROM health;", function (err, result, fields) {
+            healthString = "";
+            result.forEach(parseHealth);
+            console.log(healthString);
+            if (healthString != "") {
+                message.channel.send(healthString);
+            }
+            else {
+                message.reply("I can't show the health records because there are no health records to show.");
+            }
+        });
+    }
+    if (message.content === `${config.prefix}health dm`) {
+        if (message.member.roles.exists("name", "Storyline DM")) {
+            dbConnection.query("SELECT * FROM health;", function (err, result, fields) {
+                output = "";
+                disc = message;
+                result.forEach(parseHealthDM);
+                if (output != "") {
+                    message.author.send(output);
+                    message.reply("health list sent.");
+                }
+                else {
+                    message.reply("I can't show the health records because there are no health records to show.");
+                }
+            });
+        }
+        else // Authentication failed; print access denied message
+        {
+            message.reply("access denied.");
+        }
+    }
 });
