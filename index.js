@@ -113,13 +113,23 @@ function parseHealthDM(value, index, array) {
         disc.author.send(output);
         output = "";
     }
-    output += `ID: ${value.id}, Char Name: ${value.charName}, Char Abbrev: ${value.charAbbrev.toUpperCase()}, Health: ${value.health}, Health Icon: ${value.healthIcon.toLowerCase()}\n`;
+    output += `ID: ${value.id}, Char Name: ${value.charName}, Char Abbrev: ${value.charAbbrev.toUpperCase()}, Health: ${value.health}, Health Icon: ${value.healthIcon.toLowerCase()}, Killable: ${value.killable}\n`;
 }
 
 // Write to database
 function updateProgress(value, index, array) {
 	this.progress = value.progress + 1;
-	dbConnection.query(`UPDATE tracker SET progress = ${this.progress} WHERE id = ${param};`);
+	dbConnection.query(`UPDATE tracker SET progress = ${this.progress} WHERE id = ${value.id};`);
+}
+function updateHealth(value, index, array, amount) {
+	this.health = value.health + amount;
+	dbConnection.query(`UPDATE health SET health = ${this.health} WHERE id = ${value.id};`)
+}
+function doDamage(value, index, array) {
+	updateHealth(value, index, array, -1);
+}
+function doHealing(value, index, array) {
+	updateHealth(value, index, array, 1);
 }
 
 // Connect to the Google-Cloud-based SaaS chat server I provisioned for this
@@ -195,7 +205,7 @@ client.on("message", message => {
 			var param = message.content.slice(10);
 			var progress;
 			console.log(`Param: ${param}`);
-			dbConnection.query(`SELECT progress FROM tracker WHERE id = ${param};`, function(err, result, fields) {
+			dbConnection.query(`SELECT id, progress FROM tracker WHERE id = ${param};`, function(err, result, fields) {
 				result.forEach(updateProgress);
 			});
 			message.reply(`update received.`);
@@ -247,5 +257,29 @@ client.on("message", message => {
         {
             message.reply("access denied.");
         }
-    }
+	}
+	if(message.content.startsWith(`${config.prefix}damage `)) {
+		if(message.member.roles.exists("name", "Storyline DM")) {
+			var param = message.content.slice(8);
+			dbConnection.query(`SELECT id, health FROM health WHERE id = ${param};`, function(err, result, fields) {
+				result.forEach(doDamage);
+			});
+			message.reply(`damage applied.`);
+		}
+		else {
+			message.reply(`access denied.`);
+		}
+	}
+	if(message.content.startsWith(`${config.prefix}heal `))  {
+		if(message.member.roles.exists("name", "Storyline DM")) {
+			var param = message.content.slice(6);
+			dbConnection.query(`SELECT id, health FROM health WHERE id = ${param};`, function(err, result, fields) {
+				result.forEach(doHealing);
+			});
+			message.reply(`healing applied.`);
+		}
+		else {
+			message.reply(`access denied.`);
+		}
+	}
 });
