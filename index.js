@@ -119,7 +119,7 @@ function parseHealthDM(value, index, array) {
 // Write to database
 function updateProgress(value, index, array) {
 	this.progress = value.progress + 1;
-	dbConnection.query(`UPDATE tracker SET progress = ${this.progress} WHERE id = ${param};`);
+	dbConnection.query(`UPDATE tracker SET progress = ${this.progress} WHERE id = ${value.id};`);
 }
 function updateHealth(value, index, array, amount) {
 	this.health = value.health + amount;
@@ -205,7 +205,7 @@ client.on("message", message => {
 			var param = message.content.slice(10);
 			var progress;
 			console.log(`Param: ${param}`);
-			dbConnection.query(`SELECT progress FROM tracker WHERE id = ${param};`, function(err, result, fields) {
+			dbConnection.query(`SELECT id, progress FROM tracker WHERE id = ${param};`, function(err, result, fields) {
 				result.forEach(updateProgress);
 			});
 			message.reply(`update received.`);
