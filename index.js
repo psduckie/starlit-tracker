@@ -121,6 +121,16 @@ function updateProgress(value, index, array) {
 	this.progress = value.progress + 1;
 	dbConnection.query(`UPDATE tracker SET progress = ${this.progress} WHERE id = ${param};`);
 }
+function updateHealth(value, index, array, amount) {
+	this.health = value.health + amount;
+	dbConnection.query(`UPDATE health SET health = ${this.health} WHERE id = ${value.id};`)
+}
+function doDamage(value, index, array) {
+	updateHealth(value, index, array, -1);
+}
+function doHealing(value, index, array) {
+	updateHealth(value, index, array, 1);
+}
 
 // Connect to the Google-Cloud-based SaaS chat server I provisioned for this
 client.login(config.token);
@@ -247,5 +257,29 @@ client.on("message", message => {
         {
             message.reply("access denied.");
         }
-    }
+	}
+	if(message.content.startsWith(`${config.prefix}damage `)) {
+		if(message.member.roles.exists("name", "Storyline DM")) {
+			var param = message.content.slice(8);
+			dbConnection.query(`SELECT id, health FROM health WHERE id = ${param};`, function(err, result, fields) {
+				result.forEach(doDamage);
+			});
+			message.reply(`damage applied.`);
+		}
+		else {
+			message.reply(`access denied.`);
+		}
+	}
+	if(message.content.startsWith(`${config.prefix}heal `))  {
+		if(message.member.roles.exists("name", "Storyline DM")) {
+			var param = message.content.slice(6);
+			dbConnection.query(`SELECT id, health FROM health WHERE id = ${param};`, function(err, result, fields) {
+				result.forEach(doHealing);
+			});
+			message.reply(`healing applied.`);
+		}
+		else {
+			message.reply(`access denied.`);
+		}
+	}
 });
