@@ -5,6 +5,7 @@ const Discord = require("discord.js");
 // Define variables
 var output = "";
 var disc;
+var initiative_table = []; // Temporary; will be replaced with a MySQL table
 const filled = "█";
 const empty = "░";
 
@@ -115,6 +116,24 @@ function parseHealthDM(value, index, array) {
     }
     output += `ID: ${value.id}, Char Name: ${value.charName}, Char Abbrev: ${value.charAbbrev.toUpperCase()}, Health: ${value.health}, Health Icon: ${value.healthIcon.toLowerCase()}, Killable: ${value.killable}\n`;
 }
+function formatInitOrder() {
+	if(initiative_table.length < 1) throw 'Initiative Order is Empty.';
+  
+	var embed = new Discord.RichEmbed();
+  
+	//TODO: Differentiate between PC/NPC or Party/Enemies?
+  
+	order_text = '';
+	for (var i = 0; i < initiative_table.length; i++) {
+	  var rank = i+1;
+	  order_text += rank + ': **' + initiative_table[i].name + '** (' + initiative_table[i].roll + ')\n';
+	}
+  
+	embed.addField('Initiative Order', order_text);
+  
+	return embed;
+  }
+  
 
 // Write to database
 function updateProgress(value, index, array) {
@@ -131,6 +150,52 @@ function doDamage(value, index, array) {
 function doHealing(value, index, array) {
 	updateHealth(value, index, array, 1);
 }
+function addInitUnit(name, roll) {
+	if(name === undefined || roll === undefined) throw 'Both a Name and Initiative Roll are required.';
+	if(Number.isNaN(Number.parseInt(roll, 10))) throw 'Initiative Roll must be an integer.';
+  
+	var player = {
+	  'name': name,
+	  'roll': roll
+	};
+	initiative_table.push(player);
+  
+	//sort initiative_table
+	initiative_table.sort((a, b) => {
+	  var diff = b.roll - a.roll
+	  if(diff == 0) {
+		return Math.random() < 0.5 ? -1 : 1;
+	  }
+	  return diff;
+	});
+}
+function removeInitUnit(rank) {
+	if(rank === undefined || Number.isNaN(Number.parseInt(rank, 10))) throw 'An integer Rank is required.';
+	if(rank <= 0 || rank > initiative_table.length) throw 'Invalid unit specified. Rank out of bounds.';
+  
+	return initiative_table.splice(rank-1, 1);
+  }
+  
+  function switchInitUnits(rank1, rank2) {
+	if(rank1 === undefined || rank2 === undefined) throw 'Two Ranks are required.';
+	if(Number.isNaN(Number.parseInt(rank1, 10)) || Number.isNaN(Number.parseInt(rank2, 10))) throw 'Ranks must be integers.';
+	if(rank1 <= 0 || rank1 > initiative_table.length) throw 'Invalid first unit specified. Rank out of bounds.';
+	if(rank2 <= 0 || rank2 > initiative_table.length) throw 'Invalid second unit specified. Rank out of bounds.';
+  
+	var temp = initiative_table[rank1 - 1];
+	initiative_table[rank1 - 1] = initiative_table[rank2 - 1];
+	initiative_table[rank2 - 1] = temp;
+  }
+  
+  function nameInitUnit(rank, name) {
+	if(rank === undefined || name === undefined) throw 'Both a Rank and Name are required.';
+	if(Number.isNaN(Number.parseInt(rank, 10))) throw 'Rank must be an integer.';
+	if(rank <= 0 || rank > initiative_table.length) throw 'Invalid unit specified. Rank out of bounds.';
+  
+	initiative_table[rank - 1].name = name;
+  }
+  
+  
 
 // Connect to the Google-Cloud-based SaaS chat server I provisioned for this
 client.login(config.token);
@@ -281,5 +346,57 @@ client.on("message", message => {
 		else {
 			message.reply(`access denied.`);
 		}
+	}
+	if(message.content.startsWith(`${config.prefix}init add `)) {
+		var args = message.content.split(' ');
+		try {
+			let name = args.slice(2, args.length - 1).join(' ');
+			addInitUnit(name, args[args.length-1]);
+			message.channel.send("Added " + name + " to the initiative order.");
+		  } catch (e) {
+			console.log(e);
+			message.author.send(e); //This needs to be changed eventually
+		  }  
+	}
+	if(message.content.startsWith(`${config.prefix}init remove `)) {
+		var args = message.content.split(' ');
+		try {
+			let unit = removeInitUnit(args[2]);
+			message.channel.send("Removed " + unit[0].name + " from the initiative order.");
+		  } catch (e) {
+			console.log(e);
+			message.author.send(e);
+		  }  
+	}
+	if(message.content.startsWith(`${config.prefix}init switch `)) {
+		var args = message.content.split(' ');
+        try {
+			switchInitUnits(args[2], args[3]);
+			message.channel.send("Unit order switched.");
+		  } catch (e) {
+			console.log(e);
+			message.author.send(e);
+		  }
+	  }
+	if(message.content.startsWith(`${config.prefix}init name `)) {
+		var args = message.content.split(' ');
+        try {
+			nameInitUnit(args[2], args.slice(3).join(' '));
+			message.channel.send("Unit renamed.");
+		  } catch (e) {
+			console.log(e);
+			message.author.send(e);
+		  }
+	  }
+	if(message.content === `${config.prefix}init order`) {
+        try {
+			message.channel.send(formatInitOrder());
+		  } catch(e) {
+			console.log(e);
+			message.author.send(e);
+		  }
+	  }
+	if(message.content === `${config.prefix}init reset`) {
+        initiative_table = [];
 	}
 });
