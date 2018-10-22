@@ -116,24 +116,11 @@ function parseHealthDM(value, index, array) {
 	}
 	output += `ID: ${value.id}, Char Name: ${value.charName}, Char Abbrev: ${value.charAbbrev.toUpperCase()}, Health: ${value.health}, Health Icon: ${value.healthIcon.toLowerCase()}, Killable: ${value.killable}\n`;
 }
-function formatInitOrder() {
-	if (initiative_table.length < 1) throw 'Initiative Order is Empty.';
-
-	var embed = new Discord.RichEmbed();
-
-	//TODO: Differentiate between PC/NPC or Party/Enemies?
-
-	order_text = '';
-	for (var i = 0; i < initiative_table.length; i++) {
-		var rank = i + 1;
-		order_text += rank + ': **' + initiative_table[i].name + '** (' + initiative_table[i].roll + ')\n';
-	}
-
-	embed.addField('Initiative Order', order_text);
-
-	return embed;
+function parseInit(value, index, array) {
+	var initEntry = `${initNumber}: ${value.charName} (${value.init})\n`;
+	initNumber++;
+	initString += initEntry;
 }
-
 
 // Write to database
 function updateProgress(value, index, array) {
@@ -154,20 +141,7 @@ function addInitUnit(name, roll) {
 	if (name === undefined || roll === undefined) throw 'Both a Name and Initiative Roll are required.';
 	if (Number.isNaN(Number.parseInt(roll, 10))) throw 'Initiative Roll must be an integer.';
 
-	var player = {
-		'name': name,
-		'roll': roll
-	};
-	initiative_table.push(player);
-
-	//sort initiative_table
-	initiative_table.sort((a, b) => {
-		var diff = b.roll - a.roll
-		if (diff == 0) {
-			return Math.random() < 0.5 ? -1 : 1;
-		}
-		return diff;
-	});
+	dbConnection.query(`INSERT INTO initiative(charName, init) VALUES("${name}",${roll});`);
 }
 function removeInitUnit(rank) {
 	if (rank === undefined || Number.isNaN(Number.parseInt(rank, 10))) throw 'An integer Rank is required.';
@@ -405,7 +379,20 @@ client.on("message", message => {
 	}
 	if (message.content === `${config.prefix}init order`) {
 		try {
-			message.channel.send(formatInitOrder());
+			dbConnection.query("SELECT charName, init FROM initiative ORDER BY init DESC;", function(err, result, fields) {
+				initString = "";
+				initNumber = 1;
+				result.forEach(parseInit);
+				console.log(initString);
+				if(initString != "") {
+					message.channel.send("**Initiative Order**")
+					message.channel.send(initString);
+				}
+				else {
+					message.reply("I can't show the initiative records because there are no initiative records to show.");
+				}
+			})
+//			message.channel.send(formatInitOrder());
 		} catch (e) {
 			console.log(e);
 			message.author.send(e);
