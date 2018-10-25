@@ -5,7 +5,6 @@ const Discord = require("discord.js");
 // Define variables
 var output = "";
 var disc;
-var initiative_table = []; // Temporary; will be replaced with a MySQL table
 const filled = "█";
 const empty = "░";
 
@@ -117,7 +116,7 @@ function parseHealthDM(value, index, array) {
 	output += `ID: ${value.id}, Char Name: ${value.charName}, Char Abbrev: ${value.charAbbrev.toUpperCase()}, Health: ${value.health}, Health Icon: ${value.healthIcon.toLowerCase()}, Killable: ${value.killable}\n`;
 }
 function parseInit(value, index, array) {
-	var initEntry = `${initNumber}: ${value.charName} (${value.init})\n`;
+	var initEntry = `${initNumber}: ${value.charName} (${value.init}) {ID: ${value.id}}\n`;
 	initNumber++;
 	initString += initEntry;
 }
@@ -137,39 +136,6 @@ function doDamage(value, index, array) {
 function doHealing(value, index, array) {
 	updateHealth(value, index, array, 1);
 }
-function addInitUnit(name, roll) {
-	if (name === undefined || roll === undefined) throw 'Both a Name and Initiative Roll are required.';
-	if (Number.isNaN(Number.parseInt(roll, 10))) throw 'Initiative Roll must be an integer.';
-
-	dbConnection.query(`INSERT INTO initiative(charName, init) VALUES("${name}",${roll});`);
-}
-function removeInitUnit(rank) {
-	if (rank === undefined || Number.isNaN(Number.parseInt(rank, 10))) throw 'An integer Rank is required.';
-	if (rank <= 0 || rank > initiative_table.length) throw 'Invalid unit specified. Rank out of bounds.';
-
-	return initiative_table.splice(rank - 1, 1);
-}
-
-function switchInitUnits(rank1, rank2) {
-	if (rank1 === undefined || rank2 === undefined) throw 'Two Ranks are required.';
-	if (Number.isNaN(Number.parseInt(rank1, 10)) || Number.isNaN(Number.parseInt(rank2, 10))) throw 'Ranks must be integers.';
-	if (rank1 <= 0 || rank1 > initiative_table.length) throw 'Invalid first unit specified. Rank out of bounds.';
-	if (rank2 <= 0 || rank2 > initiative_table.length) throw 'Invalid second unit specified. Rank out of bounds.';
-
-	var temp = initiative_table[rank1 - 1];
-	initiative_table[rank1 - 1] = initiative_table[rank2 - 1];
-	initiative_table[rank2 - 1] = temp;
-}
-
-function nameInitUnit(rank, name) {
-	if (rank === undefined || name === undefined) throw 'Both a Rank and Name are required.';
-	if (Number.isNaN(Number.parseInt(rank, 10))) throw 'Rank must be an integer.';
-	if (rank <= 0 || rank > initiative_table.length) throw 'Invalid unit specified. Rank out of bounds.';
-
-	initiative_table[rank - 1].name = name;
-}
-
-
 
 // Connect to the Google-Cloud-based SaaS chat server I provisioned for this
 client.login(config.token);
@@ -325,7 +291,7 @@ client.on("message", message => {
 		var args = message.content.split(' ');
 		try {
 			let name = args.slice(2, args.length - 1).join(' ');
-			addInitUnit(name, args[args.length - 1]);
+			dbConnection.query(`INSERT INTO initiative(charName, init) VALUES("${name}", ${args[args.length - 1]});`);
 			message.channel.send("Added " + name + " to the initiative order.");
 		} catch (e) {
 			console.log(e);
@@ -336,8 +302,8 @@ client.on("message", message => {
 		if (message.member.roles.exists("name", "Storyline DM")) {
 			var args = message.content.split(' ');
 			try {
-				let unit = removeInitUnit(args[2]);
-				message.channel.send("Removed " + unit[0].name + " from the initiative order.");
+				dbConnection.query(`DELETE FROM initiative WHERE id=${args[2]};`);
+				message.channel.send("Unit removed.");
 			} catch (e) {
 				console.log(e);
 				message.author.send(e);
@@ -351,7 +317,8 @@ client.on("message", message => {
 		if (message.member.roles.exists("name", "Storyline DM")) {
 			var args = message.content.split(' ');
 			try {
-				switchInitUnits(args[2], args[3]);
+				console.log(args);
+				dbConnection.query(`UPDATE initiative AS first JOIN initiative AS second SET first.init = second.init, second.init = first.init WHERE first.id = ${args[2]} AND second.id = ${args[3]};`);
 				message.channel.send("Unit order switched.");
 			} catch (e) {
 				console.log(e);
@@ -366,7 +333,7 @@ client.on("message", message => {
 		if (message.member.roles.exists("name", "Storyline DM")) {
 			var args = message.content.split(' ');
 			try {
-				nameInitUnit(args[2], args.slice(3).join(' '));
+				dbConnection.query(`UPDATE initiative SET charName="${args.slice(3).join(' ')}" WHERE id=${args[2]};`);
 				message.channel.send("Unit renamed.");
 			} catch (e) {
 				console.log(e);
@@ -379,7 +346,7 @@ client.on("message", message => {
 	}
 	if (message.content === `${config.prefix}init order`) {
 		try {
-			dbConnection.query("SELECT charName, init FROM initiative ORDER BY init DESC;", function(err, result, fields) {
+			dbConnection.query("SELECT id, charName, init FROM initiative ORDER BY init DESC;", function(err, result, fields) {
 				initString = "";
 				initNumber = 1;
 				result.forEach(parseInit);
@@ -392,7 +359,6 @@ client.on("message", message => {
 					message.reply("I can't show the initiative records because there are no initiative records to show.");
 				}
 			})
-//			message.channel.send(formatInitOrder());
 		} catch (e) {
 			console.log(e);
 			message.author.send(e);
@@ -400,7 +366,7 @@ client.on("message", message => {
 	}
 	if (message.content === `${config.prefix}init reset`) {
 		if (message.member.roles.exists("name", "Storyline DM")) {
-			initiative_table = [];
+			dbConnection.query("TRUNCATE TABLE initiative;");
 		}
 		else {
 			message.reply(`access denied.`);
