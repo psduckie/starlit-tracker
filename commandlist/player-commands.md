@@ -1,0 +1,6 @@
+- `^signup <character name>`: Adds a character named `<character name>` to the signup list.
+- `^signuplist`: Shows the signup list.
+- `^track`: Shows current progress.
+- `^health`: Shows current and maximum health of all characters.
+- `^init add <character name> <roll>`: Adds a character named `<character name>` to the initiative order, with an initiative equal to `<roll>`.
+- `^init order`: Shows the initiative order.
