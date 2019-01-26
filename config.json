@@ -1,9 +1,0 @@
-{
-	"prefix": "^",
-	"token": "[YOUR TOKEN HERE]",
-	"host": "[HOSTNAME]",
-	"user": "[USERNAME]",
-	"password": "[PASSWORD]",
-	"database": "[DATABASE]",
-	"title": "[TITLE]"
-} 
