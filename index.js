@@ -38,7 +38,7 @@ dbConnection.connect(function (err) {
 });
 
 // Read from database
-function parseSignups(value/*, index, array*/) {
+function parseSignups(value) {
 	if (output.length > 1500) {
 		disc.channel.send(output);
 		output = "";
@@ -50,15 +50,14 @@ function parseSignups(value/*, index, array*/) {
 		output += `${value.player} signed up as ${value.chara} (Team ${value.team})\n`;
 	}
 }
-function parseSignupsDM(value/*, index, array*/) {
+function parseSignupsDM(value) {
 	if (output.length > 1500) {
 		disc.author.send(output);
 		output = "";
 	}
 	output += `ID: ${value.id}, Player: ${value.player}, Character: ${value.chara}, Team: ${value.team}\n`;
 }
-function track(value/*, index, array*/) {
-//	console.log(value);
+function track(value) {
 	if (output.length > 1500) {
 		disc.author.send(output);
 		output = "";
@@ -68,15 +67,12 @@ function track(value/*, index, array*/) {
 	}
 	else {
 		let numChars = Math.round(((value.progress / value.maxProgress) * 100) / 10);
-		//console.log(`NumChars: ${numChars}`);
 		output += `${value.description} `;
 		for (let i = 0; i < numChars; i++) {
 			output += filled;
-			//console.log(`${i}: Filled`);
 		}
 		for (let i = numChars; i < 10; i++) {
 			output += empty;
-			//console.log(`${i}: Empty`);
 		}
 		if (value.progress < value.maxProgress) {
 			output += " :triangular_flag_on_post:\n";
@@ -86,14 +82,14 @@ function track(value/*, index, array*/) {
 		}
 	}
 }
-function trackDM(value/*, index, array*/) {
+function trackDM(value) {
 	if (output.length > 1500) {
 		disc.author.send(output);
 		output = "";
 	}
 	output += `ID: ${value.id}, Description: ${value.description}, Progress: ${value.progress}, Max Progress: ${value.maxProgress}, Enabled: ${value.enabled}\n`;
 }
-function parseHealth(value/*, index, array*/) {
+function parseHealth(value) {
 	var healthEntry = "`";
 	healthEntry += value.charAbbrev.toUpperCase();
 	for (var i = healthEntry.length; i <= 5; i++) {
@@ -114,14 +110,14 @@ function parseHealth(value/*, index, array*/) {
 	}
 	healthString += (healthEntry + "\n");
 }
-function parseHealthDM(value/*, index, array*/) {
+function parseHealthDM(value) {
 	if (output.length > 1500) {
 		disc.author.send(output);
 		output = "";
 	}
 	output += `ID: ${value.id}, Char Name: ${value.charName}, Char Abbrev: ${value.charAbbrev.toUpperCase()}, Health: ${value.health}, Health Icon: ${value.healthIcon.toLowerCase()}, Killable: ${value.killable}\n`;
 }
-function parseInit(value/*, index, array*/) {
+function parseInit(value) {
 	var initEntry = `${initNumber}: ${value.charName} (${value.init}) {ID: ${value.id}}\n`;
 	initNumber++;
 	initString += initEntry;
@@ -152,22 +148,18 @@ client.on("message", message => {
 	var param;
 
 	if (message.content === `${config.prefix}test`) { // Test message
-		//console.log(message.author);
-		//		dbConnection.query(`INSERT INTO test(test) VALUES('${message.author.username}');`);
 		message.reply("test received.");
 	}
 	if (message.content.startsWith(`${config.prefix}signup `)) { // Insert into database
 		param = message.content.slice(8);
 		param = param.replace(/'/g, "''");
-		//console.log(param);
 		dbConnection.query(`INSERT INTO signups(player, chara) VALUES('${message.author.username}', '${param}');`);
 		message.member.addRole(message.guild.roles.find("name", "Storyline Players")); // Mark the user as having inserted a record into the database
 		message.reply("signup received.");
 	}
 	if (message.content === `${config.prefix}signuplist`) { // Read from database
-		dbConnection.query("SELECT player, chara, team FROM signups;", function (err, result/*, fields*/) {
+		dbConnection.query("SELECT player, chara, team FROM signups;", function (err, result) {
 			if (err) { throw err; }
-			//console.log(result);
 			output = "";
 			disc = message;
 			result.forEach(parseSignups);
@@ -176,8 +168,7 @@ client.on("message", message => {
 	}
 	if (message.content === `${config.prefix}signuplist dm`) { // Table dump from database	
 		if (message.member.roles.exists("name", "Storyline DM")) { // Authenticate user; if it succeeds, dump the table into a private message
-			//console.log("If statement hit");
-			dbConnection.query("SELECT * FROM signups;", function (err, result/*, fields*/) {
+			dbConnection.query("SELECT * FROM signups;", function (err, result) {
 				output = "";
 				disc = message;
 				result.forEach(parseSignupsDM);
@@ -191,7 +182,7 @@ client.on("message", message => {
 		}
 	}
 	if (message.content === `${config.prefix}track`) {
-		dbConnection.query("SELECT description, progress, maxProgress, enabled FROM tracker;", function (err, result/*, fields*/) {
+		dbConnection.query("SELECT description, progress, maxProgress, enabled FROM tracker;", function (err, result) {
 			if (err) { throw err; }
 			output = `**${config.title}**\n`;
 			disc = message;
@@ -201,7 +192,7 @@ client.on("message", message => {
 	}
 	if (message.content === `${config.prefix}track dm`) {
 		if (message.member.roles.exists("name", "Storyline DM")) {
-			dbConnection.query("SELECT * FROM tracker;", function (err, result/*, fields*/) {
+			dbConnection.query("SELECT * FROM tracker;", function (err, result) {
 				output = "";
 				disc = message;
 				result.forEach(trackDM);
@@ -217,7 +208,6 @@ client.on("message", message => {
 	if (message.content.startsWith(`${config.prefix}progress `)) {
 		if (message.member.roles.exists("name", "Storyline DM")) {
 			param = message.content.slice(10);
-			//console.log(`Param: ${param}`);
 			dbConnection.query(`SELECT id, progress FROM tracker WHERE id = ${param};`, function (err, result) {
 				result.forEach(updateProgress);
 			});
