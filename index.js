@@ -128,19 +128,19 @@ function parseInit(value/*, index, array*/) {
 }
 
 // Write to database
-function updateProgress(value/*, index, array*/) {
+function updateProgress(value) {
 	progress = value.progress + 1;
 	dbConnection.query(`UPDATE tracker SET progress = ${progress} WHERE id = ${value.id};`);
 }
-function updateHealth(value/*, index, array*/, amount) {
+function updateHealth(value, amount) {
 	this.health = value.health + amount;
 	dbConnection.query(`UPDATE health SET health = ${this.health} WHERE id = ${value.id};`);
 }
-function doDamage(value, index, array) {
-	updateHealth(value, index, array, -1);
+function doDamage(value) {
+	updateHealth(value, -1);
 }
-function doHealing(value, index, array) {
-	updateHealth(value, index, array, 1);
+function doHealing(value) {
+	updateHealth(value, 1);
 }
 
 // Connect to the Google-Cloud-based SaaS chat server I provisioned for this
