@@ -157,7 +157,7 @@ client.on("message", message => {
 			user: config.user,
 			password: config.password,
 			host: config.host,
-			port = 33060
+			port: 33060
 		}).then(function(session) {
 			var table = session.getSchema(config.database).getTable('signups');
 			return table.insert(['player', 'chara']).values([message.author.username, param]).execute();
