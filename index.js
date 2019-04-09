@@ -162,7 +162,6 @@ client.on("message", message => {
 			var table = session.getSchema(config.database).getTable('signups');
 			return table.insert(['player', 'chara']).values([message.author.username, param]).execute();
 		})
-		dbConnection.query(`INSERT INTO signups(player, chara) VALUES('${message.author.username}', '${param}');`);
 		message.member.addRole(message.guild.roles.find("name", "Storyline Players")); // Mark the user as having inserted a record into the database
 		message.reply("signup received.");
 	}
@@ -299,7 +298,15 @@ client.on("message", message => {
 		args = message.content.split(" ");
 		try {
 			let name = args.slice(2, args.length - 1).join(" ");
-			dbConnection.query(`INSERT INTO initiative(charName, init) VALUES("${name}", ${args[args.length - 1]});`);
+			MySQL.getSession({
+				user: config.user,
+				password: config.password,
+				host: config.host,
+				port: 33060
+			}).then(function(session) {
+				var table = session.getSchema(config.database).getTable('initiative');
+				return table.insert(['charName', 'init']).values([name, args[args.length - 1]]).execute();
+			})	
 			message.channel.send("Added " + name + " to the initiative order.");
 		} catch (e) {
 			// eslint-disable-next-line no-console
