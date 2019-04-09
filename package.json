@@ -9,7 +9,12 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+<<<<<<< HEAD
     "@mysql/xdevapi": "8.0.14",
     "discord.js": "^11.3.2"
+=======
+    "discord.js": "^11.4.2",
+    "mysql": "^2.16.0"
+>>>>>>> master
   }
 }
