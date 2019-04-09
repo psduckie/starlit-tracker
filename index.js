@@ -16,13 +16,13 @@ var progress;
 const client = new Discord.Client();
 
 // Create the database interface
-const MySQL = require("mysql");
-const dbConnection = MySQL.createConnection({
-	host: config.host,
+const MySQL = require("@mysql/xdevapi");
+/*const dbConnection = MySQL.getSession({
 	user: config.user,
 	password: config.password,
-	database: config.database
-});
+	host: config.host,
+	port: 33060
+});*/
 
 // Log a ready message when ready
 client.on("ready", () => {
@@ -153,7 +153,16 @@ client.on("message", message => {
 	if (message.content.startsWith(`${config.prefix}signup `)) { // Insert into database
 		param = message.content.slice(8);
 		param = param.replace(/'/g, "''");
-		dbConnection.query(`INSERT INTO signups(player, chara) VALUES('${message.author.username}', '${param}');`);
+		MySQL.getSession({
+			user: config.user,
+			password: config.password,
+			host: config.host,
+			port = 33060
+		}).then(function(session) {
+			var table = session.getSchema(config.database).getTable('signups');
+			return table.insert(['player', 'chara']).values([message.author.username, param]).execute();
+		})
+//		dbConnection.query(`INSERT INTO signups(player, chara) VALUES('${message.author.username}', '${param}');`);
 		message.member.addRole(message.guild.roles.find("name", "Storyline Players")); // Mark the user as having inserted a record into the database
 		message.reply("signup received.");
 	}
