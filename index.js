@@ -31,11 +31,11 @@ client.on("ready", () => {
 });
 
 // Connect to the database
-dbConnection.connect(function (err) {
+/*dbConnection.connect(function (err) {
 	if (err) { throw err; }
 	// eslint-disable-next-line no-console
 	console.log("Connected to the database.");
-});
+});*/
 
 // Read from database
 function parseSignups(value) {
@@ -126,11 +126,11 @@ function parseInit(value) {
 // Write to database
 function updateProgress(value) {
 	progress = value.progress + 1;
-	dbConnection.query(`UPDATE tracker SET progress = ${progress} WHERE id = ${value.id};`);
+//	dbConnection.query(`UPDATE tracker SET progress = ${progress} WHERE id = ${value.id};`);
 }
 function updateHealth(value, amount) {
 	this.health = value.health + amount;
-	dbConnection.query(`UPDATE health SET health = ${this.health} WHERE id = ${value.id};`);
+//	dbConnection.query(`UPDATE health SET health = ${this.health} WHERE id = ${value.id};`);
 }
 function doDamage(value) {
 	updateHealth(value, -1);
@@ -167,22 +167,22 @@ client.on("message", message => {
 		message.reply("signup received.");
 	}
 	if (message.content === `${config.prefix}signuplist`) { // Read from database
-		dbConnection.query("SELECT player, chara, team FROM signups;", function (err, result) {
+/*		dbConnection.query("SELECT player, chara, team FROM signups;", function (err, result) {
 			if (err) { throw err; }
 			output = "";
 			disc = message;
 			result.forEach(parseSignups);
 			message.channel.send(output);
-		});
+		});*/
 	}
 	if (message.content === `${config.prefix}signuplist dm`) { // Table dump from database	
 		if (message.member.roles.exists("name", "Storyline DM")) { // Authenticate user; if it succeeds, dump the table into a private message
-			dbConnection.query("SELECT * FROM signups;", function (err, result) {
+/*			dbConnection.query("SELECT * FROM signups;", function (err, result) {
 				output = "";
 				disc = message;
 				result.forEach(parseSignupsDM);
 				message.author.send(output);
-			});
+			});*/
 			message.reply("signup list sent.");
 		}
 		else // Authentication failed; print access denied message
@@ -191,22 +191,22 @@ client.on("message", message => {
 		}
 	}
 	if (message.content === `${config.prefix}track`) {
-		dbConnection.query("SELECT description, progress, maxProgress, enabled FROM tracker;", function (err, result) {
+/*		dbConnection.query("SELECT description, progress, maxProgress, enabled FROM tracker;", function (err, result) {
 			if (err) { throw err; }
 			output = `**${config.title}**\n`;
 			disc = message;
 			result.forEach(track);
 			message.channel.send(output);
-		});
+		});*/
 	}
 	if (message.content === `${config.prefix}track dm`) {
 		if (message.member.roles.exists("name", "Storyline DM")) {
-			dbConnection.query("SELECT * FROM tracker;", function (err, result) {
+/*			dbConnection.query("SELECT * FROM tracker;", function (err, result) {
 				output = "";
 				disc = message;
 				result.forEach(trackDM);
 				message.author.send(output);
-			});
+			});*/
 			message.reply("tracker list sent.");
 		}
 		else // Authentication failed; print access denied message
@@ -217,9 +217,9 @@ client.on("message", message => {
 	if (message.content.startsWith(`${config.prefix}progress `)) {
 		if (message.member.roles.exists("name", "Storyline DM")) {
 			param = message.content.slice(10);
-			dbConnection.query(`SELECT id, progress FROM tracker WHERE id = ${param};`, function (err, result) {
+/*			dbConnection.query(`SELECT id, progress FROM tracker WHERE id = ${param};`, function (err, result) {
 				result.forEach(updateProgress);
-			});
+			});*/
 			message.reply("update received.");
 		}
 		else // Authentication failed; print access denied message
@@ -230,7 +230,7 @@ client.on("message", message => {
 	if (message.content.startsWith(`${config.prefix}enable `)) {
 		if (message.member.roles.exists("name", "Storyline DM")) {
 			param = message.content.slice(8);
-			dbConnection.query(`UPDATE tracker SET enabled = 1 WHERE id = ${param};`);
+//			dbConnection.query(`UPDATE tracker SET enabled = 1 WHERE id = ${param};`);
 			message.reply("update received.");
 		}
 		else {
@@ -238,7 +238,7 @@ client.on("message", message => {
 		}
 	}
 	if (message.content === `${config.prefix}health`) {
-		dbConnection.query("SELECT charAbbrev, health, healthIcon, killable FROM health;", function (err, result) {
+/*		dbConnection.query("SELECT charAbbrev, health, healthIcon, killable FROM health;", function (err, result) {
 			healthString = "";
 			result.forEach(parseHealth);
 			// eslint-disable-next-line no-console
@@ -249,11 +249,11 @@ client.on("message", message => {
 			else {
 				message.reply("I can't show the health records because there are no health records to show.");
 			}
-		});
+		});*/
 	}
 	if (message.content === `${config.prefix}health dm`) {
 		if (message.member.roles.exists("name", "Storyline DM")) {
-			dbConnection.query("SELECT * FROM health;", function (err, result) {
+/*			dbConnection.query("SELECT * FROM health;", function (err, result) {
 				output = "";
 				disc = message;
 				result.forEach(parseHealthDM);
@@ -264,7 +264,7 @@ client.on("message", message => {
 				else {
 					message.reply("I can't show the health records because there are no health records to show.");
 				}
-			});
+			});*/
 		}
 		else // Authentication failed; print access denied message
 		{
@@ -274,9 +274,9 @@ client.on("message", message => {
 	if (message.content.startsWith(`${config.prefix}damage `)) {
 		if (message.member.roles.exists("name", "Storyline DM")) {
 			param = message.content.slice(8);
-			dbConnection.query(`SELECT id, health FROM health WHERE id = ${param};`, function (err, result) {
+/*			dbConnection.query(`SELECT id, health FROM health WHERE id = ${param};`, function (err, result) {
 				result.forEach(doDamage);
-			});
+			});*/
 			message.reply("damage applied.");
 		}
 		else {
@@ -286,9 +286,9 @@ client.on("message", message => {
 	if (message.content.startsWith(`${config.prefix}heal `)) {
 		if (message.member.roles.exists("name", "Storyline DM")) {
 			param = message.content.slice(6);
-			dbConnection.query(`SELECT id, health FROM health WHERE id = ${param};`, function (err, result) {
+/*			dbConnection.query(`SELECT id, health FROM health WHERE id = ${param};`, function (err, result) {
 				result.forEach(doHealing);
-			});
+			});*/
 			message.reply("healing applied.");
 		}
 		else {
@@ -299,7 +299,7 @@ client.on("message", message => {
 		args = message.content.split(" ");
 		try {
 			let name = args.slice(2, args.length - 1).join(" ");
-			dbConnection.query(`INSERT INTO initiative(charName, init) VALUES("${name}", ${args[args.length - 1]});`);
+//			dbConnection.query(`INSERT INTO initiative(charName, init) VALUES("${name}", ${args[args.length - 1]});`);
 			message.channel.send("Added " + name + " to the initiative order.");
 		} catch (e) {
 			// eslint-disable-next-line no-console
@@ -311,7 +311,7 @@ client.on("message", message => {
 		if (message.member.roles.exists("name", "Storyline DM")) {
 			args = message.content.split(" ");
 			try {
-				dbConnection.query(`DELETE FROM initiative WHERE id=${args[2]};`);
+//				dbConnection.query(`DELETE FROM initiative WHERE id=${args[2]};`);
 				message.channel.send("Unit removed.");
 			} catch (e) {
 				// eslint-disable-next-line no-console
@@ -329,7 +329,7 @@ client.on("message", message => {
 			try {
 				// eslint-disable-next-line no-console
 				console.log(args);
-				dbConnection.query(`UPDATE initiative AS first JOIN initiative AS second SET first.init = second.init, second.init = first.init WHERE first.id = ${args[2]} AND second.id = ${args[3]};`);
+//				dbConnection.query(`UPDATE initiative AS first JOIN initiative AS second SET first.init = second.init, second.init = first.init WHERE first.id = ${args[2]} AND second.id = ${args[3]};`);
 				message.channel.send("Unit order switched.");
 			} catch (e) {
 				// eslint-disable-next-line no-console
@@ -345,7 +345,7 @@ client.on("message", message => {
 		if (message.member.roles.exists("name", "Storyline DM")) {
 			args = message.content.split(" ");
 			try {
-				dbConnection.query(`UPDATE initiative SET charName="${args.slice(3).join(" ")}" WHERE id=${args[2]};`);
+//				dbConnection.query(`UPDATE initiative SET charName="${args.slice(3).join(" ")}" WHERE id=${args[2]};`);
 				message.channel.send("Unit renamed.");
 			} catch (e) {
 				// eslint-disable-next-line no-console
@@ -359,7 +359,7 @@ client.on("message", message => {
 	}
 	if (message.content === `${config.prefix}init order`) {
 		try {
-			dbConnection.query("SELECT id, charName, init FROM initiative ORDER BY init DESC;", function(err, result) {
+/*			dbConnection.query("SELECT id, charName, init FROM initiative ORDER BY init DESC;", function(err, result) {
 				initString = "";
 				initNumber = 1;
 				result.forEach(parseInit);
@@ -372,7 +372,7 @@ client.on("message", message => {
 				else {
 					message.reply("I can't show the initiative records because there are no initiative records to show.");
 				}
-			});
+			});*/
 		} catch (e) {
 			// eslint-disable-next-line no-console
 			console.log(e);
@@ -381,7 +381,7 @@ client.on("message", message => {
 	}
 	if (message.content === `${config.prefix}init reset`) {
 		if (message.member.roles.exists("name", "Storyline DM")) {
-			dbConnection.query("TRUNCATE TABLE initiative;");
+//			dbConnection.query("TRUNCATE TABLE initiative;");
 		}
 		else {
 			message.reply("access denied.");
