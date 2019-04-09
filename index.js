@@ -161,18 +161,30 @@ client.on("message", message => {
 		}).then(function(session) {
 			var table = session.getSchema(config.database).getTable('signups');
 			return table.insert(['player', 'chara']).values([message.author.username, param]).execute();
-		})
+		});
 		message.member.addRole(message.guild.roles.find("name", "Storyline Players")); // Mark the user as having inserted a record into the database
 		message.reply("signup received.");
 	}
 	if (message.content === `${config.prefix}signuplist`) { // Read from database
-		dbConnection.query("SELECT player, chara, team FROM signups;", function (err, result) {
+		output = "";
+		MySQL.getSession({
+			user: config.user,
+			password: config.password,
+			host: config.host,
+			port: 33060
+		}).then(function(session) {
+			var table = session.getSchema(config.database).getTable('signups');
+			return table.select(["player", "chara", "team"]).execute(parseSignups);
+		});
+		message.channel.send(output);
+		
+/*		dbConnection.query("SELECT player, chara, team FROM signups;", function (err, result) {
 			if (err) { throw err; }
 			output = "";
 			disc = message;
 			result.forEach(parseSignups);
 			message.channel.send(output);
-		});
+		});*/
 	}
 	if (message.content === `${config.prefix}signuplist dm`) { // Table dump from database	
 		if (message.member.roles.exists("name", "Storyline DM")) { // Authenticate user; if it succeeds, dump the table into a private message
@@ -306,7 +318,7 @@ client.on("message", message => {
 			}).then(function(session) {
 				var table = session.getSchema(config.database).getTable('initiative');
 				return table.insert(['charName', 'init']).values([name, args[args.length - 1]]).execute();
-			})	
+			});
 			message.channel.send("Added " + name + " to the initiative order.");
 		} catch (e) {
 			// eslint-disable-next-line no-console
