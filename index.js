@@ -39,15 +39,15 @@ client.on("ready", () => {
 
 // Read from database
 function parseSignups(value) {
-	if (output.length > 1500) {
+/*	if (output.length > 1500) {
 		disc.channel.send(output);
 		output = "";
-	}
-	if (value.team === null) {
-		output += `${value.player} signed up as ${value.chara}\n`;
+	}*/
+	if (value[2] === null) {
+		return `${value[0]} signed up as ${value[1]}\n`;
 	}
 	else {
-		output += `${value.player} signed up as ${value.chara} (Team ${value.team})\n`;
+		return `${value[0]} signed up as ${value[1]} (Team ${value[2]})\n`;
 	}
 }
 function parseSignupsDM(value) {
@@ -166,17 +166,17 @@ client.on("message", message => {
 		message.reply("signup received.");
 	}
 	if (message.content === `${config.prefix}signuplist`) { // Read from database
-		output = "";
 		MySQL.getSession({
 			user: config.user,
 			password: config.password,
 			host: config.host,
 			port: 33060
 		}).then(function(session) {
+			output = "";
 			var table = session.getSchema(config.database).getTable('signups');
-			return table.select(["player", "chara", "team"]).execute(parseSignups);
+			table.select(["player", "chara", "team"]).execute(function(row){output += parseSignups(row)});
+			if(output != ""){message.channel.send(output);}
 		});
-		message.channel.send(output);
 		
 /*		dbConnection.query("SELECT player, chara, team FROM signups;", function (err, result) {
 			if (err) { throw err; }
